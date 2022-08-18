@@ -44,7 +44,10 @@ class Parser:
         api_item.description = os.linesep.join(
             list(filter(None,
                         map(lambda x: x.lstrip('*').lstrip(' *'),
-                            self.description_regex.match(content).group("description").split(os.linesep)))))
+                            self.description_regex.match(content).group("description").split(os.linesep)))))\
+            .replace(">", "&#x003E;").replace("<", "&#x003C;").replace("&", "&#x0026;")\
+            .replace("\'", "&#x0027;").replace("\"", "&#x0022;")
+
         examples = self.example_regex.search(content)
         if examples:
             api_item.examples = os.linesep.join(list(map(lambda x: x[3:], examples.group("examples").rstrip(' *\n').split(os.linesep))))
