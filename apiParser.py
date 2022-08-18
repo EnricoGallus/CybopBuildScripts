@@ -41,7 +41,7 @@ class Parser:
     def __parse_javadoc_content(self, api_element: Pattern[str]):
         api_item = ApiItem(api_element[4], api_element[0].lstrip(' *'), api_element[3].lower())
         content = api_element[2]
-        api_item.description = ' '.join(
+        api_item.description = os.linesep.join(
             list(filter(None,
                         map(lambda x: x.lstrip('*').lstrip(' *'),
                             self.description_regex.match(content).group("description").split(os.linesep)))))
