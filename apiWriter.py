@@ -76,7 +76,7 @@ class Writer:
 
     def __write_type_groups(self, elements, type):
         file_path = os.path.join(self.spec_output_path, type + '.cybol')
-        group_names = set(map(lambda x: x.group, elements))
+        group_names = sorted(set(map(lambda x: x.group, elements)))
         self.__write_content(file_path, Template(type_template_raw).render(group_names=group_names, type=type))
 
     def __write_groups(self, elements, type, group):
