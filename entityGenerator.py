@@ -5,8 +5,6 @@ import re
 import html
 from jinja2 import Template
 
-# todo implement sort
-
 model_template_raw = '''{% for entity in entities %}
 /**
  * The {{ entity.name }} html character entity reference model.
@@ -48,7 +46,12 @@ class EntityItem:
         self.character = html.unescape(normalized_hex)
         self.character_length = len(entity)
         self.name = name.lower()
-        self.name_block = name.replace(' ', '_').replace('-', '_').upper()
+        self.name_block = name\
+            .replace(' ', '_')\
+            .replace('-', '_')\
+            .replace("_(LF)", "")\
+            .replace("/", "_")\
+            .upper()
         self.decimal_points = []
         self.unicode_points = []
         self.hex_points = []
@@ -61,7 +64,7 @@ class EntityItem:
             for hex_value in hex_values:
                 decimal_value = int(hex_value[4:], 16)
                 self.__add_decimal_to_lists(decimal_value)
-        self.hex_string = ';'.join(self.hex_points)
+        self.hex_string = ', '.join(self.hex_points)
         self.decimal_string = ";".join(map(str, self.decimal_points))
         self.unicode_string = ';'.join(self.unicode_points)
 
@@ -79,8 +82,16 @@ class Parser:
     def parse_entities(self):
         with urllib.request.urlopen(self.url_entity) as response:
             html = response.read().decode()
-            all_entities = self.regex.findall(html)
-            return list(map(lambda x: EntityItem(x[0], x[1], x[2]), all_entities))
+            found_entities = self.regex.findall(html)
+            entities = dict({})
+            for x in found_entities:
+                entity_item = EntityItem(x[0], x[1], x[2])
+                existing = entities.get(entity_item.name_block)
+                if not existing:
+                    # at the moment we exclude entities that exists with the same name already
+                    entities[entity_item.name_block] = entity_item
+
+            return list(sorted(list(entities.values()), key=lambda e: e.decimal_points[0]))
 
 
 class Writer:
@@ -92,11 +103,11 @@ class Writer:
         self.entities = entities
 
     def write_content(self):
-        self.__write_file_content(self.model_path, 46, -3, Template(model_template_raw))
-        self.__write_file_content(self.executor_path, 56, -4, Template(executor_template_raw))
-        self.__write_file_content(self.unicode_path, 211, -402, Template(unicode_template_raw))
+        self.__write_file_content(self.model_path, 46, -3, self.entities, Template(model_template_raw))
+        self.__write_file_content(self.executor_path, 56, -4, self.entities, Template(executor_template_raw))
+        self.__write_file_content(self.unicode_path, 1199, -159, filter(lambda x: len(x.decimal_points) > 1 or (len(x.decimal_points) == 1 and x.decimal_points[0] > 255), self.entities), Template(unicode_template_raw))
 
-    def __write_file_content(self, file_path, pre, post, template):
+    def __write_file_content(self, file_path, pre, post, entities, template):
         original = open(file_path)
         original_content = original.readlines()
         pre = original_content[0:pre]
@@ -104,7 +115,7 @@ class Writer:
 
         with open(file_path, 'w') as outfile:
             outfile.write(''.join(pre))
-            outfile.write(template.render(entities=self.entities))
+            outfile.write(template.render(entities=entities))
             outfile.write(''.join(post))
 
 
