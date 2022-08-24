@@ -42,11 +42,13 @@ class Parser:
         api_item = ApiItem(api_element[4], api_element[0].lstrip(' *'), api_element[3].lower())
         content = api_element[2]
         api_item.description = os.linesep.join(
-            list(filter(None,
-                        map(lambda x: x.lstrip('*').lstrip(' *'),
-                            self.description_regex.match(content).group("description").split(os.linesep)))))\
-            .replace(">", "&#x003E;").replace("<", "&#x003C;").replace("&", "&#x0026;")\
-            .replace("\'", "&#x0027;").replace("\"", "&#x0022;")
+            list(map(lambda x: x.lstrip('*').lstrip(' *'),
+                     self.description_regex.match(content).group("description")
+                     .replace(">", "&#x003E;").replace("<", "&#x003C;")
+                     .replace("&", "&#x0026;").replace("\'", "&#x0027;").replace("\"", "&#x0022;")
+                     .lstrip(" *" + os.linesep).lstrip("*" + os.linesep)
+                     .rstrip(" *" + os.linesep).rstrip("*" + os.linesep)
+                     .split(os.linesep))))
 
         examples = self.example_regex.search(content)
         if examples:
@@ -76,4 +78,3 @@ if __name__ == "__main__":
     api_items = Parser().parse_structure()
     writer = Writer(api_items)
     writer.update_api_data()
-
