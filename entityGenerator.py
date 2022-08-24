@@ -5,18 +5,18 @@ import re
 import html
 from jinja2 import Template
 
-model_template_raw = '''{% for entity in entities %}
+model_template_raw = '''{% for entity in entities %}{% for e in entity.names %}
 /**
- * The {{ entity.name }} html character entity reference model.
+ * The {{ e.name }} html character entity reference model.
  *
- * Name: {{ entity.entity }}
+ * Name: {{ e.name }}
  * Character: {{ entity.character }}
  * Unicode code point: {{ entity.unicode_string }} ({{ entity.decimal_string }})
  * Description: {{ entity.name }}
  */
-static wchar_t* {{ entity.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL = L"{{ entity.entity }}";
-static int* {{ entity.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT = NUMBER_{{ entity.character_length }}_INTEGER_STATE_CYBOI_MODEL_ARRAY;
-{% endfor %}
+static wchar_t* {{ e.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL = L"{{ e.name }}";
+static int* {{ e.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT = NUMBER_{{ e.name_length }}_INTEGER_STATE_CYBOI_MODEL_ARRAY;
+{% endfor %}{% endfor %}
 '''
 
 unicode_template_raw = '''{% for entity in entities %}
@@ -25,36 +25,37 @@ static wchar_t* {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL = {{ entity
 {% endfor %}
 '''
 
-executor_template_raw = '''{% for entity in entities %}
+executor_template_raw = '''{% for entity in entities %}{% for e in entity.names %}
     if (r == *FALSE_BOOLEAN_STATE_CYBOI_MODEL) {
 
-        check_operation((void*) &r, p1, (void*) {{ entity.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL, p2, (void*) {{ entity.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT, (void*) EQUAL_COMPARE_LOGIC_CYBOI_FORMAT, (void*) WIDE_CHARACTER_TEXT_STATE_CYBOI_TYPE);
+        check_operation((void*) &r, p1, (void*) {{ e.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL, p2, (void*) {{ e.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT, (void*) EQUAL_COMPARE_LOGIC_CYBOI_FORMAT, (void*) WIDE_CHARACTER_TEXT_STATE_CYBOI_TYPE);
 
         if (r != *FALSE_BOOLEAN_STATE_CYBOI_MODEL) {
 
             modify_item(p0, (void*) {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL, (void*) WIDE_CHARACTER_TEXT_STATE_CYBOI_TYPE, (void*) FALSE_BOOLEAN_STATE_CYBOI_MODEL, (void*) PRIMITIVE_STATE_CYBOI_MODEL_COUNT, *NULL_POINTER_STATE_CYBOI_MODEL, (void*) VALUE_PRIMITIVE_STATE_CYBOI_NAME, (void*) TRUE_BOOLEAN_STATE_CYBOI_MODEL, (void*) APPEND_MODIFY_LOGIC_CYBOI_FORMAT);
         }
     }
-    {% endfor %}
+{% endfor %}{% endfor %}
 '''
+
+
+class EntityName:
+    def __init__(self, name: str, post_name_block: str):
+        self.name = name.replace(".", "_")
+        self.name_length = len(name)
+        self.name_block = "{0}_{1}".format(name.upper(), post_name_block).replace(".", "_")
 
 
 class EntityItem:
     def __init__(self, entity: str, hex_raw: str, name: str):
         normalized_hex = hex_raw.replace('#38;', '', 1)
-        self.entity = entity
         self.character = html.unescape(normalized_hex)
-        self.character_length = len(entity)
         self.name = name.lower()
-        self.name_block = name\
-            .replace(' ', '_')\
-            .replace('-', '_')\
-            .replace("_(LF)", "")\
-            .replace("/", "_")\
-            .upper()
+        self.name_block = name.replace(' ', '_').replace('-', '_').replace("_(LF)", "").replace("/", "_").upper()
         self.decimal_points = []
         self.unicode_points = []
         self.hex_points = []
+        self.names = [EntityName(entity, self.name_block)]
 
         if len(normalized_hex) == 5:
             decimal_value = int(normalized_hex[2:-1])
@@ -68,10 +69,13 @@ class EntityItem:
         self.decimal_string = ";".join(map(str, self.decimal_points))
         self.unicode_string = ';'.join(self.unicode_points)
 
-    def __add_decimal_to_lists(self, decimal_value):
+    def __add_decimal_to_lists(self, decimal_value: int):
         self.decimal_points.append(decimal_value)
         self.unicode_points.append('U+' + format(decimal_value, '04x'))
         self.hex_points.append('0x' + format(decimal_value, '04x'))
+
+    def add_entity_name(self, name: str):
+        self.names.append(EntityName(name, self.name_block))
 
 
 class Parser:
@@ -85,11 +89,14 @@ class Parser:
             found_entities = self.regex.findall(html)
             entities = dict({})
             for x in found_entities:
-                entity_item = EntityItem(x[0], x[1], x[2])
+                entity_name = x[0]
+                entity_item = EntityItem(entity_name, x[1], x[2])
                 existing = entities.get(entity_item.name_block)
                 if not existing:
-                    # at the moment we exclude entities that exists with the same name already
                     entities[entity_item.name_block] = entity_item
+                else:
+                    if entity_name.lower() not in set(map(lambda e: e.name.lower(), existing.names)):
+                        existing.add_entity_name(entity_name)
 
             return list(sorted(list(entities.values()), key=lambda e: e.decimal_points[0]))
 
