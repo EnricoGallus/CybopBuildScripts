@@ -5,7 +5,7 @@ import re
 import html
 from jinja2 import Template
 
-model_template_raw = '''{% for entity in entities %}{% for e in entity.names %}
+model_template_raw = '''{% for entity in entities %}{% for e in entity.names %}{% set entity_name = e.get_name_block(entity.names) %}
 /**
  * The {{ e.name }} html character entity reference model.
  *
@@ -14,8 +14,8 @@ model_template_raw = '''{% for entity in entities %}{% for e in entity.names %}
  * Unicode code point: {{ entity.unicode_string }} ({{ entity.decimal_string }})
  * Description: {{ entity.name }}
  */
-static wchar_t* {{ e.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL = L"{{ e.name }}";
-static int* {{ e.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT = NUMBER_{{ e.name_length }}_INTEGER_STATE_CYBOI_MODEL_ARRAY;
+static wchar_t* {{ entity_name }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL = L"{{ e.name }}";
+static int* {{ entity_name }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT = NUMBER_{{ e.name_length }}_INTEGER_STATE_CYBOI_MODEL_ARRAY;
 {% endfor %}{% endfor %}
 '''
 
@@ -25,10 +25,10 @@ static wchar_t* {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL = {{ entity
 {% endfor %}
 '''
 
-executor_template_raw = '''{% for entity in entities %}{% for e in entity.names %}
+executor_template_raw = '''{% for entity in entities %}{% for e in entity.names %}{% set entity_name = e.get_name_block(entity.names) %}
     if (r == *FALSE_BOOLEAN_STATE_CYBOI_MODEL) {
 
-        check_operation((void*) &r, p1, (void*) {{ e.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL, p2, (void*) {{ e.name_block }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT, (void*) EQUAL_COMPARE_LOGIC_CYBOI_FORMAT, (void*) WIDE_CHARACTER_TEXT_STATE_CYBOI_TYPE);
+        check_operation((void*) &r, p1, (void*) {{ entity_name }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL, p2, (void*) {{ entity_name }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT, (void*) EQUAL_COMPARE_LOGIC_CYBOI_FORMAT, (void*) WIDE_CHARACTER_TEXT_STATE_CYBOI_TYPE);
 
         if (r != *FALSE_BOOLEAN_STATE_CYBOI_MODEL) {
 
@@ -44,6 +44,18 @@ class EntityName:
         self.name = name.replace(".", "_")
         self.name_length = len(name)
         self.name_block = "{0}_{1}".format(name.upper(), post_name_block).replace(".", "_")
+
+    def get_name_block(self, entity_names: list):
+        is_redundant = self.name_block in map(lambda m: m.name_block, filter(lambda f: f.name != self.name, entity_names))
+        if is_redundant:
+            if self.name == self.name.lower():
+                return "SMALL_" + self.name_block
+            elif self.name == self.name.upper():
+                return "CAPITAL_" + self.name_block
+            else:
+                return "CAMEL_" + self.name_block
+        else:
+            return self.name_block
 
 
 class EntityItem:
@@ -95,8 +107,7 @@ class Parser:
                 if not existing:
                     entities[entity_item.name_block] = entity_item
                 else:
-                    if entity_name.lower() not in set(map(lambda e: e.name.lower(), existing.names)):
-                        existing.add_entity_name(entity_name)
+                    existing.add_entity_name(entity_name)
 
             return list(sorted(list(entities.values()), key=lambda e: e.decimal_points[0]))
 
