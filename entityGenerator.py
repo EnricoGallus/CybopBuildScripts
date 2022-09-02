@@ -22,6 +22,7 @@ static int* {{ entity_name }}_HTML_CHARACTER_ENTITY_REFERENCE_MODEL_COUNT = NUMB
 unicode_template_raw = '''{% for entity in entities %}
 static wchar_t {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL_ARRAY[] = { {{ entity.hex_string }} };
 static wchar_t* {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL = {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL_ARRAY;
+static int* {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL_COUNT = NUMBER_{{ entity.character_length }}_INTEGER_STATE_CYBOI_MODEL_ARRAY;
 {% endfor %}
 '''
 
@@ -32,7 +33,7 @@ executor_template_raw = '''{% for entity in entities %}{% for e in entity.names 
 
         if (r != *FALSE_BOOLEAN_STATE_CYBOI_MODEL) {
 
-            modify_item(p0, (void*) {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL, (void*) WIDE_CHARACTER_TEXT_STATE_CYBOI_TYPE, (void*) FALSE_BOOLEAN_STATE_CYBOI_MODEL, (void*) PRIMITIVE_STATE_CYBOI_MODEL_COUNT, *NULL_POINTER_STATE_CYBOI_MODEL, (void*) VALUE_PRIMITIVE_STATE_CYBOI_NAME, (void*) TRUE_BOOLEAN_STATE_CYBOI_MODEL, (void*) APPEND_MODIFY_LOGIC_CYBOI_FORMAT);
+            modify_item(p0, (void*) {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL, (void*) WIDE_CHARACTER_TEXT_STATE_CYBOI_TYPE, (void*) FALSE_BOOLEAN_STATE_CYBOI_MODEL, (void*){% if entity.should_generate_unicode %} {{ entity.name_block }}_UNICODE_CHARACTER_CODE_MODEL_COUNT{% else %} PRIMITIVE_STATE_CYBOI_MODEL_COUNT{% endif %}, *NULL_POINTER_STATE_CYBOI_MODEL, (void*) VALUE_PRIMITIVE_STATE_CYBOI_NAME, (void*) TRUE_BOOLEAN_STATE_CYBOI_MODEL, (void*) APPEND_MODIFY_LOGIC_CYBOI_FORMAT);
         }
     }
 {% endfor %}{% endfor %}
@@ -80,6 +81,8 @@ class EntityItem:
         self.hex_string = ', '.join(self.hex_points)
         self.decimal_string = ";".join(map(str, self.decimal_points))
         self.unicode_string = ';'.join(self.unicode_points)
+        self.character_length = len(self.unicode_points)
+        self.should_generate_unicode = len(self.decimal_points) > 1 or (len(self.decimal_points) == 1 and self.decimal_points[0] > 255)
 
     def __add_decimal_to_lists(self, decimal_value: int):
         self.decimal_points.append(decimal_value)
@@ -123,7 +126,7 @@ class Writer:
     def write_content(self):
         self.__write_file_content(self.model_path, 46, -3, self.entities, Template(model_template_raw))
         self.__write_file_content(self.executor_path, 56, -4, self.entities, Template(executor_template_raw))
-        self.__write_file_content(self.unicode_path, 1199, -159, filter(lambda x: len(x.decimal_points) > 1 or (len(x.decimal_points) == 1 and x.decimal_points[0] > 255), self.entities), Template(unicode_template_raw))
+        self.__write_file_content(self.unicode_path, 1104, -15, filter(lambda x: x.should_generate_unicode, self.entities), Template(unicode_template_raw))
 
     def __write_file_content(self, file_path, pre, post, entities, template):
         original = open(file_path)
