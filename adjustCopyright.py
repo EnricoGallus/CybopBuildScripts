@@ -14,9 +14,9 @@ version = sys.argv[1]
 copyright_info = sys.argv[2]
 
 # filters
-fileExtensionFilter = ('.c', '.h', '.cybol', '.sh', '.txt', '.xsd', '.css', '.dtd', '.html', '.py')
+fileExtensionFilter = ('.c', '.h', '.cybol', '.sh', '.txt', '.xsd', '.css', '.dtd', '.html', '.py', '.in')
 fileFilter = ('AUTHORS', 'ChangeLog', 'COPYING', 'INSTALL', 'NEWS', 'README')
-folderExclude = ('include', 'tools', 'www', 'examples', 'doc', 'build')
+folderExclude = ('include', 'tools', 'www', 'examples', 'doc')
 
 # copyright definition
 oldCopyright = r"Copyright \(C\) 1999-(\d+). Christian Heller."
