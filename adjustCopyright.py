@@ -26,10 +26,12 @@ newVersion = "@version CYBOP " + version + " " + datetime.today().strftime('%Y-%
 
 
 def change_file_content(filepath):
-    for line in fileinput.input(filepath, inplace=True):
-        line = re.sub(oldCopyright, copyright_info, line)  # replace to year in copyright
-        line = re.sub(oldVersion, newVersion, line)  # replace version and today date
-        sys.stdout.write(line)
+    file_content_read_only = open(filepath, 'r').read()
+    if re.findall(oldVersion, file_content_read_only) and re.findall(oldCopyright, file_content_read_only):
+        for line in fileinput.input(filepath, inplace=True):
+            line = re.sub(oldCopyright, copyright_info, line)  # replace to year in copyright
+            line = re.sub(oldVersion, newVersion, line)  # replace version and today date
+            sys.stdout.write(line)
 
 
 for subdir, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), '..', '..')):
