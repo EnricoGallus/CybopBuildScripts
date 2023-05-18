@@ -1,4 +1,3 @@
-import json
 import os
 from subprocess import run, TimeoutExpired
 
@@ -6,8 +5,6 @@ from subprocess import run, TimeoutExpired
 class IntegrationTestResult:
     def __init__(self, name: str, success: bool):
         self.name = name
-        #self.output = output
-        #self.error_output = error_output
         self.success = success
 
     def encode(self):
@@ -30,17 +27,15 @@ class IntegrationTester:
                 cwd=self.path_to_examples,
                 capture_output=True)
             print(result.stdout)
-            #return IntegrationTestResult(relative_path_to_test_file, result.stdout.decode(), result.stderr.decode(), result.returncode == 0)
             return IntegrationTestResult(relative_path_to_test_file, result.returncode == 0)
         except TimeoutExpired as e:
             print('Execution of ' + relative_path_to_test_file + ' failed')
-            #return IntegrationTestResult(relative_path_to_test_file, str(e.stdout), str(e.stderr), False)
             return IntegrationTestResult(relative_path_to_test_file, False)
 
     def __find_all_programs(self):
         for path, dirs, files in os.walk(self.path_to_examples):
             if 'run.cybol' in files:
-                dirs[:] = [] # found run.cybol stop processing further
+                dirs[:] = []  # found run.cybol stop processing further
                 self.results.append(self.__test_execution(os.path.join(path.replace(self.path_to_examples + os.sep, ''), 'run.cybol')))
             else:
                 print('No test found in: ' + path)
