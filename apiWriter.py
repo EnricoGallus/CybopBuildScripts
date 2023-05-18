@@ -41,7 +41,7 @@ class Writer:
     def __init__(self, api_items: []):
         self.api_items = api_items
         self.basePath = os.path.join(os.path.dirname(__file__), '..', '..')
-        self.path_to_format = os.path.join(self.basePath, 'src', 'constant', 'format', 'cybol')
+        self.path_to_format = os.path.join(self.basePath, 'include', 'constant', 'format', 'cybol')
         self.spec_output_path = os.path.join(self.basePath, 'tools', 'api-generator', 'spec')
         self.api_output_path = os.path.join(self.basePath, 'doc', 'cybol', 'api')
         self.variable_types = {'encoding', 'channel'}

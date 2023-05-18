@@ -17,9 +17,9 @@ class Parser:
         self.variable_regex = re.compile("static wchar_t\* .*?(?P<type>(CHANNEL|ENCODING)) = L\"(?P<value>.+)\";")
 
         self.basePath = os.path.join(os.path.dirname(__file__), '..', '..')
-        self.path_to_format = os.path.join(self.basePath, 'src', 'constant', 'format', 'cybol')
-        self.path_to_channel = os.path.join(self.basePath, 'src', 'constant', 'channel', 'cybol')
-        self.path_to_encoding = os.path.join(self.basePath, 'src', 'constant', 'encoding', 'cybol')
+        self.path_to_format = os.path.join(self.basePath, 'include', 'constant', 'format', 'cybol')
+        self.path_to_channel = os.path.join(self.basePath, 'include', 'constant', 'channel', 'cybol')
+        self.path_to_encoding = os.path.join(self.basePath, 'include', 'constant', 'encoding', 'cybol')
 
     def parse_structure(self):
         api_items = []
