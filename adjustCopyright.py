@@ -16,7 +16,7 @@ copyright_info = sys.argv[2]
 # filters
 fileExtensionFilter = ('.c', '.h', '.cybol', '.sh', '.txt', '.xsd', '.css', '.dtd', '.html', '.py', '.in')
 fileFilter = ('AUTHORS', 'ChangeLog', 'COPYING', 'INSTALL', 'NEWS', 'README')
-folderExclude = ('include', 'tools', 'www', 'examples', 'doc')
+folderInclude = ('include', 'tools', 'www', 'examples', 'doc')
 
 # copyright definition
 oldCopyright = r"Copyright \(C\) 1999-(\d+). Christian Heller."
@@ -35,7 +35,7 @@ def change_file_content(filepath):
 
 
 for subdir, dirs, files in os.walk(os.path.join(os.path.dirname(__file__), '..', '..')):
-    dirs[:] = [d for d in dirs if d not in folderExclude]
+    dirs[:] = [d for d in dirs if d not in folderInclude]
     for file in files:
         if file.lower().endswith(fileExtensionFilter) or file in fileFilter:
             change_file_content(subdir + os.sep + file)
