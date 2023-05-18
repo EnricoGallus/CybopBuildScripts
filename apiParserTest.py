@@ -4,7 +4,7 @@ from apiWriter import Writer
 from apiParser import Parser
 
 
-def path_to_test_file(file_name: str):
+def path_to_test_file(file_name):
     return os.path.join(os.path.dirname(__file__), 'test', file_name)
 
 
