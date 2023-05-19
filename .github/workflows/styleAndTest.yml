@@ -1,6 +1,7 @@
 name: check lint and run tests
 
-on: [push]
+on:
+  pull_request:
 
 jobs:
   build:
