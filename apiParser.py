@@ -8,13 +8,15 @@ from apiWriter import Writer
 class Parser:
     def __init__(self):
         self.api_regex = re.compile(
-            "\/\*\*\s(?P<brief>.*)([\*\s]*?)(?=Description:)([\W\w\s]*?)static wchar_t\* .*(?P<type>LOGIC|STATE).* = L\"(?P<name>.*)\";")
-        self.description_regex = re.compile("Description:\s(?P<description>[\W\w\s]*?)(Examples:|Properties:|(\*\/))")
-        self.example_regex = re.compile("Examples:\s \*\s(?P<examples>[\W\w]*?)(Properties:|(\*\/))")
-        self.properties_regex = re.compile("Properties:(?P<content>[\w\W]*?)(Constraints|\*/)")
-        self.constraints_regex = re.compile("Constraints for Property (?P<property>.*):\s(?P<content>[\w\W]*?(Constraints|\*/))")
-        self.property_regex = re.compile(" - (?P<name>.*) \((?P<required>.*)\) \[(?P<format>.*)\]: (?P<description>.*)")
-        self.variable_regex = re.compile("static wchar_t\* .*?(?P<type>(CHANNEL|ENCODING)) = L\"(?P<value>.+)\";")
+            r"\/\*\*\s(?P<brief>.*)([\*\s]*?)(?=Description:)([\W\w\s]*?)static wchar_t\* .*(?P<type>LOGIC|STATE).* = L\"(?P<name>.*)\";")
+        self.description_regex = re.compile(r"Description:\s(?P<description>[\W\w\s]*?)(Examples:|Properties:|(\*\/))")
+        self.example_regex = re.compile(r"Examples:\s \*\s(?P<examples>[\W\w]*?)(Properties:|(\*\/))")
+        self.properties_regex = re.compile(r"Properties:(?P<content>[\w\W]*?)(Constraints|\*/)")
+        self.constraints_regex = re.compile(
+            r"Constraints for Property (?P<property>.*):\s(?P<content>[\w\W]*?(Constraints|\*/))")
+        self.property_regex = re.compile(
+            r" - (?P<name>.*) \((?P<required>.*)\) \[(?P<format>.*)\]: (?P<description>.*)")
+        self.variable_regex = re.compile(r"static wchar_t\* .*?(?P<type>(CHANNEL|ENCODING)) = L\"(?P<value>.+)\";")
 
         self.basePath = os.path.join(os.path.dirname(__file__), '..', '..')
         self.path_to_format = os.path.join(self.basePath, 'include', 'constant', 'format', 'cybol')
